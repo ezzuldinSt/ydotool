@@ -58,3 +58,17 @@ jobs:
             ${{github.workspace}}/build/ydotoold-${{matrix.os}}
             ${{github.workspace}}/build/ydotoold-${{matrix.os}}.service
 
+  build-typesafe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install libcurl for the optional do command
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Configure CMake
+        run: cmake -S . -B build-ts -DBUILD_DOCS=OFF -DENABLE_TYPESAFE=ON
+
+      - name: Build
+        run: cmake --build build-ts
+

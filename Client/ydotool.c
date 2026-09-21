@@ -44,6 +44,7 @@
 struct tool_def {
 	char name[16];
 	void *ptr;
+	bool needs_socket;
 };
 
 int fd_daemon_socket = -1;
@@ -71,13 +72,16 @@ static int tool_bakers(int argc, char **argv) {
 }
 
 static const struct tool_def tool_list[] = {
-	{"click",     tool_click},
-	{"mousemove", tool_mousemove},
-	{"type",      tool_type},
-	{"key",       tool_key},
-	{"debug",     tool_debug},
-	{"bakers",    tool_bakers},
-	{"stdin",     tool_stdin},
+	{"click",     tool_click, true},
+	{"mousemove", tool_mousemove, true},
+	{"type",      tool_type, true},
+	{"key",       tool_key, true},
+	{"debug",     tool_debug, true},
+	{"bakers",    tool_bakers, true},
+	{"stdin",     tool_stdin, true},
+#ifdef HAVE_TYPESAFE
+	{"do",        tool_do, false},
+#endif
 };
 
 static void show_help() {
@@ -111,33 +115,12 @@ void uinput_emit(uint16_t type, uint16_t code, int32_t val, bool syn_report) {
 
 }
 
-int main(int argc, char **argv) {
-	if (argc < 2 || strncmp(argv[1], "-h", 2) == 0 || strncmp(argv[1], "--h", 3) == 0 || strcmp(argv[1], "help") == 0) {
-		show_help();
-		return 0;
-	}
-
-	int (*tool_main)(int argc, char **argv) = NULL;
-
-	int tool_count = sizeof(tool_list) / sizeof(struct tool_def);
-
-	for (int i=0; i<tool_count; i++) {
-		if (strcmp(tool_list[i].name, argv[1]) == 0) {
-			tool_main = tool_list[i].ptr;
-		}
-	}
-
-	if (!tool_main) {
-		printf("ydotool: Unknown command: %s\n"
-		       "Run 'ydotool help' if you want a command list\n", argv[1]);
-		return 1;
-	}
-
+int ydotool_connect(void) {
 	fd_daemon_socket = socket(AF_UNIX, SOCK_DGRAM, 0);
 
 	if (fd_daemon_socket < 0) {
 		perror("failed to create socket");
-		exit(2);
+		return -1;
 	}
 
 	struct sockaddr_un sa = {
@@ -170,8 +153,38 @@ int main(int argc, char **argv) {
 				break;
 		}
 
-		exit(2);
+		return -1;
 	}
+
+	return 0;
+}
+
+int main(int argc, char **argv) {
+	if (argc < 2 || strncmp(argv[1], "-h", 2) == 0 || strncmp(argv[1], "--h", 3) == 0 || strcmp(argv[1], "help") == 0) {
+		show_help();
+		return 0;
+	}
+
+	int (*tool_main)(int argc, char **argv) = NULL;
+	bool needs_socket = true;
+
+	int tool_count = sizeof(tool_list) / sizeof(struct tool_def);
+
+	for (int i=0; i<tool_count; i++) {
+		if (strcmp(tool_list[i].name, argv[1]) == 0) {
+			tool_main = tool_list[i].ptr;
+			needs_socket = tool_list[i].needs_socket;
+		}
+	}
+
+	if (!tool_main) {
+		printf("ydotool: Unknown command: %s\n"
+		       "Run 'ydotool help' if you want a command list\n", argv[1]);
+		return 1;
+	}
+
+	if (needs_socket && ydotool_connect() < 0)
+		exit(2);
 
 	return tool_main(argc-1, argv+1);
 }
