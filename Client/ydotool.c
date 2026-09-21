@@ -82,6 +82,9 @@ static const struct tool_def tool_list[] = {
 #ifdef HAVE_TYPESAFE
 	{"do",        tool_do, false},
 #endif
+#ifdef HAVE_MCP
+	{"mcp",       tool_mcp, false},
+#endif
 };
 
 static void show_help() {
@@ -140,16 +143,16 @@ int ydotool_connect(void) {
 
 	if (connect(fd_daemon_socket, (const struct sockaddr *) &sa, sizeof(sa))) {
 		int err = errno;
-		printf("failed to connect socket `%s': %s\n", sa.sun_path, strerror(err));
+		fprintf(stderr, "failed to connect socket `%s': %s\n", sa.sun_path, strerror(err));
 
 		switch (err) {
 			case ENOENT:
 			case ECONNREFUSED:
-				puts("Please check if ydotoold is running.");
+				fputs("Please check if ydotoold is running.\n", stderr);
 				break;
 			case EACCES:
 			case EPERM:
-				puts("Please check if the current user has sufficient permissions to access the socket file.");
+				fputs("Please check if the current user has sufficient permissions to access the socket file.\n", stderr);
 				break;
 		}
 

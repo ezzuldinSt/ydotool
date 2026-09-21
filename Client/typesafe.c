@@ -17,6 +17,8 @@
 */
 
 #include "typesafe.h"
+
+#define JSMN_STATIC
 #include "jsmn.h"
 
 #include <curl/curl.h>

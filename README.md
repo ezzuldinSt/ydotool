@@ -43,6 +43,7 @@ Currently implemented command(s):
 - `bakers` - Show the honorable bakers
 - `stdin` - Sends the key presses as it was a keyboard (i.e from ssh) See [PR #229](https://github.com/ReimuNotMoe/ydotool/pull/229)
 - `do` - Perform a natural-language input request (optional build, see below)
+- `mcp` - Run a Model Context Protocol computer-use server (optional build, see below)
 
 ## Examples
 Switch to tty1 (Ctrl+Alt+F1), wait 2 seconds, and type some words:
@@ -116,6 +117,43 @@ performed.
 The interpreter can be re-validated against the reference phrase table with:
 
     python3 contrib/do_validation.py
+
+## MCP computer-use server
+`ydotool mcp` exposes input control and, on GNOME, window/focus/screenshot
+perception to AI agents through the Model Context Protocol over stdio. It works
+with MCP hosts such as Claude Code, Codex, Cursor or opencode.
+
+This command is optional and off by default because it requires `atspi-2` and
+`gio-2.0`:
+
+    cmake -B build -DENABLE_MCP=ON
+    cmake --build build
+
+Register it with a host, for example Claude Code:
+
+    claude mcp add ydotool -- /path/to/ydotool mcp
+
+or point any MCP client at a stdio server that runs `ydotool mcp`.
+
+Tools:
+
+- `computer_get_state` - active window and window list with geometry
+- `computer_screenshot` - full-screen PNG; the desktop asks the user to allow it
+- `computer_focus_window` - best-effort focus, verified through accessibility events
+- `computer_type`, `computer_press`, `computer_key`, `computer_click`,
+  `computer_scroll`, `computer_move` - input actions
+- `computer_do` - optional natural-language request (built with `ENABLE_TYPESAFE`)
+
+Actions go to the focused window. Pass `expect_window` on an action to make it
+refuse when another window is focused. Safety options:
+
+- `--read-only` exposes perception tools only
+- `--dry-run` reports planned actions without sending events
+- `--require-focus` refuses actions when the active window is unknown
+- `--allow-dangerous` permits ctrl+alt+delete, VT switches and magic sysrq
+- `--rate-limit=N` caps actions per second (default 20)
+
+`contrib/mcp_test.py` runs a protocol and event-level smoke test against a build.
 
 ## Notes
 #### Runtime

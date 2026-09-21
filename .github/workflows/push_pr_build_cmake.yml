@@ -72,3 +72,20 @@ jobs:
       - name: Build
         run: cmake --build build-ts
 
+  build-mcp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install MCP dependencies
+        run: sudo apt-get update && sudo apt-get install -y libatspi2.0-dev libglib2.0-dev pkg-config
+
+      - name: Configure CMake
+        run: cmake -S . -B build-mcp -DBUILD_DOCS=OFF -DENABLE_MCP=ON
+
+      - name: Build
+        run: cmake --build build-mcp
+
+      - name: Run MCP smoke test
+        run: python3 contrib/mcp_test.py ./build-mcp/ydotool
+

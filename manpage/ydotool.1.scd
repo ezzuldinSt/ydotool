@@ -29,6 +29,8 @@ Currently implemented command(s):
 	Resend all keypresses as a keyboard (i.e. from ssh)
 *do*
 	Interpret a natural-language input request (only in builds with ENABLE_TYPESAFE)
+*mcp*
+	Run a Model Context Protocol computer-use server (only in builds with ENABLE_MCP)
 
 # KEYBOARD COMMANDS
 *key* [*-d*,*--key-delay* _<ms>_] [_<KEY:PRESSED>_ ...]
@@ -179,6 +181,61 @@ Currently implemented command(s):
 		ydotool do "copy the selected text"
 		ydotool do "scroll down three notches"
 		ydotool do --dry-run "double-click with the left mouse button"
+
+# MCP SERVER
+
+*mcp* [*-n*,*--dry-run*] [*--read-only*] [*--require-focus*] [*--allow-dangerous*] [*--rate-limit* _<n>_] [*--perception* _<gnome|none>_] [*--layout* _<name>_] [*--key-delay* _<ms>_] [*--key-hold* _<ms>_] [*--screenshot-timeout* _<s>_] [*-l*,*--log-args*]
+
+	Run a Model Context Protocol server over stdio that exposes input control
+	and, on GNOME, window/focus/screenshot perception to AI agents. Only
+	available in builds with *-DENABLE_MCP=ON*, which requires *atspi-2* and
+	*gio-2.0*.
+
+	The server speaks newline-delimited JSON-RPC on stdin and stdout. All logs go
+	to stderr. Tools include *computer_get_state*, *computer_screenshot*,
+	*computer_focus_window*, *computer_type*, *computer_press*, *computer_key*,
+	*computer_click*, *computer_scroll*, *computer_move*, and the optional
+	*computer_do* when built with ENABLE_TYPESAFE.
+
+	On GNOME Wayland the compositor does not allow programs to activate windows
+	directly, so *computer_focus_window* cycles windows and waits for
+	accessibility events to confirm the result. Screenshots go through the
+	xdg-desktop-portal and the desktop asks the user to allow each capture.
+
+	Options:
+
+	*-n*,*--dry-run*
+		Report planned actions without sending events.
+
+	*--read-only*
+		Expose perception tools only.
+
+	*--require-focus*
+		Refuse actions when the active window is unknown.
+
+	*--allow-dangerous*
+		Allow ctrl+alt+delete, VT switches and magic sysrq combinations.
+
+	*--rate-limit* _<n>_
+		Maximum actions per second. Default 20.
+
+	*--perception* _<gnome|none>_
+		Perception backend. Default *gnome*; *none* leaves actions only.
+
+	*--layout* _<name>_
+		Keyboard layout used by *computer_type*. Default *us*.
+
+	*--key-delay* _<ms>_
+		Delay between keys. Default 20ms.
+
+	*--key-hold* _<ms>_
+		Key hold time. Default 20ms.
+
+	*--screenshot-timeout* _<s>_
+		Seconds to wait for the screenshot permission dialog. Default 60.
+
+	*-l*,*--log-args*
+		Log tool arguments to stderr. Typed text is redacted by default.
 
 # YDOTOOL SOCKET
 

@@ -64,6 +64,8 @@
 
 extern void uinput_emit(uint16_t type, uint16_t code, int32_t val, bool syn_report);
 
+extern int fd_daemon_socket;
+
 struct keymap;
 
 extern int ydotool_connect(void);
@@ -76,4 +78,7 @@ extern int tool_key(int argc, char **argv);
 extern int tool_stdin(int argc, char **argv);
 #ifdef HAVE_TYPESAFE
 extern int tool_do(int argc, char **argv);
+#endif
+#ifdef HAVE_MCP
+extern int tool_mcp(int argc, char **argv);
 #endif
